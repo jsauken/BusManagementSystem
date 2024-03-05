@@ -1,5 +1,6 @@
 package kz.iitu.intercitybustransportation.mapper;
 
+import kz.iitu.intercitybustransportation.dto.SignupDTO;
 import kz.iitu.intercitybustransportation.dto.UserDTO;
 import kz.iitu.intercitybustransportation.model.User;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,14 @@ public class UserMapper {
         user.setEmail(userDto.getEmail());
         user.setPhoneNumber(userDto.getPhoneNumber());
         user.setPassword(userDto.getPassword());
+        // map other fields
+        return user;
+    }
+
+    public User toEntity(SignupDTO userDto) {
+        User user = new User();
+        user.setEmail(userDto.email());
+        user.setPassword(userDto.password());
         // map other fields
         return user;
     }

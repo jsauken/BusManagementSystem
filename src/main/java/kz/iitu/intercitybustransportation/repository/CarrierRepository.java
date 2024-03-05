@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 public interface CarrierRepository extends JpaRepository<Carrier, Long> {
     @Override
     Carrier getById(Long aLong);
+
+
 }

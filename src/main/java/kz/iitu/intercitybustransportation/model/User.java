@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,6 +19,12 @@ public class User {
     private String email;
     private String phoneNumber;
     private String password;
+
+    public User(String name, String email, String hashedPassword) {
+        this.username = name;
+        this.email=email;
+        this.password = hashedPassword;
+    }
 
     // other fields, getters and setters
 }
