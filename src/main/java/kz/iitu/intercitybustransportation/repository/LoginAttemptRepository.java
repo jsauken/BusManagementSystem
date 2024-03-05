@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, String> {
+public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long> {
 
  @Query(value = "SELECT * FROM login_attempt WHERE email = :email ORDER BY created_at DESC LIMIT 10", nativeQuery = true)
  List<LoginAttempt> findRecent(String email);

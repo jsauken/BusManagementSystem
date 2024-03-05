@@ -6,20 +6,27 @@ import kz.iitu.intercitybustransportation.dto.UserDTO;
 import kz.iitu.intercitybustransportation.exceptions.DuplicateException;
 import kz.iitu.intercitybustransportation.exceptions.ResourceNotFoundException;
 import kz.iitu.intercitybustransportation.mapper.UserMapper;
+import kz.iitu.intercitybustransportation.model.Role;
 import kz.iitu.intercitybustransportation.model.User;
 import kz.iitu.intercitybustransportation.repository.UserRepository;
+import kz.iitu.intercitybustransportation.service.RoleService;
 import kz.iitu.intercitybustransportation.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
+    @Autowired
+    private RoleService roleService;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -36,7 +43,6 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-
     @Transactional
     public void signup(SignupDTO signupDTO) {
         String email = signupDTO.email();
@@ -68,7 +74,34 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO createUser(UserDTO userDto) {
         User user = userMapper.toEntity(userDto);
+        String email = userDto.getEmail();
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            throw new DuplicateException(String.format("User with the email address '%s' already exists.", email));
+        }
+
+        String hashedPassword = passwordEncoder.encode(userDto.getPassword());
+        Role role = roleService.findByName("USER");
+        Set<Role> roleSet = new HashSet<>();
+        roleSet.add(role);
+
+
+        // If email domain is admin.edu, add ADMIN role
+        if(user.getEmail().split("@")[1].equals("admin.com")){
+            role = roleService.findByName("ADMIN");
+            roleSet.add(role);
+        }
+
+        user.setRoles(roleSet);
+
+        user.setUsername(userDto.getUsername());
+        user.setEmail(email);
+        user.setPassword(hashedPassword);
+
+        userRepository.save(user);
+
         User savedUser = userRepository.save(user);
+
         return userMapper.toDto(savedUser);
     }
 
@@ -83,6 +116,13 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id " + id));
     }
 
+    private Set<SimpleGrantedAuthority> getAuthority(User user) {
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+        user.getRoles().forEach(role -> {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
+        });
+        return authorities;
+    }
     @Override
     public void deleteUser(Long id) {
         userRepository.findById(id)
@@ -90,4 +130,6 @@ public class UserServiceImpl implements UserService {
                     throw new ResourceNotFoundException("User not found with id " + id);
                 });
     }
+
+
 }

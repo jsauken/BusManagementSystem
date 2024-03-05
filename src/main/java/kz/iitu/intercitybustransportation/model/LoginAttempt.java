@@ -20,7 +20,6 @@ public class LoginAttempt {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(unique = true)
     private String email;
 
     private boolean success;
