@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import kz.iitu.intercitybustransportation.dto.*;
 
@@ -17,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -65,6 +68,25 @@ public class AuthController {
         return ResponseEntity.ok(new LoginResponseDTO(request.email(), token));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request, @RequestHeader("Authorization") String token) {
+        // Extract the token from the Authorization header
+        String extractedToken = token.replace("Bearer ", "");
+
+        // Here you can invalidate the token, remove it from the client-side
+        // For example, you can store the tokens in a blacklist or simply clear it from the client
+        // In this example, we will just clear it from the client-side
+
+        // Clear the token from the client-side by setting it to null or empty
+        // This will effectively "logout" the user
+        // In a real-world scenario, you would also want to handle token blacklisting or revocation
+        // This is just a basic example for clearing the token
+        request.getSession().invalidate();
+
+        // Respond with success message
+        return ResponseEntity.ok().build();
+    }
+
     @Operation(summary = "Get recent login attempts")
     @ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = LoginResponseDTO.class)))
     @ApiResponse(responseCode = "403", content = @Content(schema = @Schema(implementation = ApiErrorDTO.class)))//forbidden
@@ -75,6 +97,8 @@ public class AuthController {
         List<LoginAttempt> loginAttempts = loginService.findRecentLoginAttempts(email);
         return ResponseEntity.ok(convertToDTOs(loginAttempts));
     }
+
+
 
     private List<LoginAttemptResponse> convertToDTOs(List<LoginAttempt> loginAttempts) {
         return loginAttempts.stream()
