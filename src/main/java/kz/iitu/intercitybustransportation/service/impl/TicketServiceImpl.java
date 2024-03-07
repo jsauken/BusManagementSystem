@@ -5,15 +5,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kz.iitu.intercitybustransportation.dto.ApiErrorDTO;
 import kz.iitu.intercitybustransportation.dto.TicketDTO;
+import kz.iitu.intercitybustransportation.dto.TicketResponseDTO;
 import kz.iitu.intercitybustransportation.exceptions.NoAccessException;
 import kz.iitu.intercitybustransportation.exceptions.ResourceNotFoundException;
+import kz.iitu.intercitybustransportation.exceptions.SeatIsNotEmptyException;
 import kz.iitu.intercitybustransportation.mapper.TicketMapper;
+import kz.iitu.intercitybustransportation.model.Flight;
 import kz.iitu.intercitybustransportation.model.Ticket;
 import kz.iitu.intercitybustransportation.model.enums.TicketStatus;
 import kz.iitu.intercitybustransportation.repository.FlightRepository;
 import kz.iitu.intercitybustransportation.repository.TicketRepository;
 import kz.iitu.intercitybustransportation.repository.UserRepository;
-import kz.iitu.intercitybustransportation.security.JwtAuthFilter;
 import kz.iitu.intercitybustransportation.security.JwtHelper;
 import kz.iitu.intercitybustransportation.service.TicketService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +31,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 
-
 @Service
 public class TicketServiceImpl implements TicketService {
 
@@ -42,7 +43,6 @@ public class TicketServiceImpl implements TicketService {
     private final TicketMapper ticketMapper;
 
 
-
     @Autowired
     public TicketServiceImpl(TicketRepository ticketRepository, ObjectMapper objectMapper, UserRepository userRepository, FlightRepository flightRepository, TicketMapper ticketMapper) {
         this.ticketRepository = ticketRepository;
@@ -53,16 +53,16 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public TicketDTO getTicket(Long id) {
+    public TicketResponseDTO getTicket(Long id) {
         return ticketRepository.findById(id)
-                .map(ticketMapper::toDto)
+                .map(ticketMapper::entToDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Ticket not found with id " + id));
     }
 
     @Override
-    public List<TicketDTO> getAllTickets() {
+    public List<TicketResponseDTO> getAllTickets() {
         return ticketRepository.findAll().stream()
-                .map(ticketMapper::toDto)
+                .map(ticketMapper::entToDto)
                 .collect(Collectors.toList());
     }
 
@@ -103,9 +103,9 @@ public class TicketServiceImpl implements TicketService {
     public TicketDTO bookTicket(Long userId, TicketDTO ticketDto) {
 
 
-        if(Objects.equals(userId, ticketDto.getUserId())){
+        if (Objects.equals(userId, ticketDto.getUserId())) {
             System.out.println("OK");
-        }else {
+        } else {
             System.out.println("Not User");
         }
         Ticket ticket = new Ticket();
@@ -113,11 +113,17 @@ public class TicketServiceImpl implements TicketService {
         ticket.setUser(userRepository.getReferenceById(ticketDto.getUserId()));
         ticket.setTicketStatus(TicketStatus.CONFIRMED);
         ticket.setPrice(flightRepository.getReferenceById(ticketDto.getFlightId()).getPrice());
+
         ticket.setFlight(flightRepository.getReferenceById(ticketDto.getFlightId()));
         ticket.setBookingTime(LocalDateTime.now());
         ticket.setSeatNumber(ticketDto.getSeatNumber());
         String qrCode = UUID.randomUUID().toString();
-        ticket.setQrCode(qrCode); //??????
+        ticket.setQrCode(qrCode);
+        Flight flight = flightRepository.getReferenceById(ticketDto.getFlightId());
+        List<Ticket> tickets = flight.getTickets();
+        flight.getTickets().add(ticket);
+        flightRepository.save(flight);
+
         Ticket savedTicket = ticketRepository.save(ticket);
         return ticketMapper.toDto(savedTicket);
     }
@@ -137,6 +143,9 @@ public class TicketServiceImpl implements TicketService {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 token = authHeader.substring(7);
                 email = JwtHelper.extractUsername(token);
+            }
+            if (!seatAvailable(flightRepository.getById(flightId), seat)) {
+                throw new SeatIsNotEmptyException("Seat is not Empty!");
             }
             Ticket ticket = new Ticket();
             ticket.setUser(userRepository.getByEmail(email));
@@ -160,7 +169,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public void cancelTicket(Long ticketId) {
+    public TicketDTO cancelTicket(Long ticketId) throws IOException {
 
 
         ServletRequestAttributes sra = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -208,5 +217,16 @@ public class TicketServiceImpl implements TicketService {
         }
     }
 
+
+    private boolean seatAvailable(Flight flight, int seat) {
+
+
+        for (Ticket ticket : flight.getTickets()) {
+            if (ticket.getSeatNumber() == seat) {
+                return false;
+            }
+        }
+        return true;
+    }
 
 }

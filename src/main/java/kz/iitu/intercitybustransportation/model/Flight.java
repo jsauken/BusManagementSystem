@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @AllArgsConstructor
@@ -27,4 +28,8 @@ public class Flight {
     private Bus bus;
 
     private Double price;
+
+
+    @ManyToMany
+    private List<Ticket> tickets;
 }
