@@ -13,12 +13,16 @@ import java.time.Duration;
 import java.util.Date;
 
 import kz.iitu.intercitybustransportation.exceptions.NoAccessException;
+import kz.iitu.intercitybustransportation.model.User;
+import kz.iitu.intercitybustransportation.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public class JwtHelper {
 
     private static final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private static final int MINUTES = 60;
+
+
 
     public static String generateToken(String email) {
         var now = Instant.now();
@@ -56,4 +60,7 @@ public class JwtHelper {
         Claims claims = getTokenBody(token);
         return claims.getExpiration().before(new Date());
     }
+
+
+
 }

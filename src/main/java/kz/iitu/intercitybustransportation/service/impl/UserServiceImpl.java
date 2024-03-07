@@ -56,6 +56,41 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
+    @Override
+    public UserDTO createBusOperator(UserDTO userDto) {
+        User user = userMapper.toEntity(userDto);
+        String email = userDto.getEmail();
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            throw new DuplicateException(String.format("User with the email address '%s' already exists.", email));
+        }
+        Role employeeRole = roleService.findByName("MANAGER");
+        Role customerRole = roleService.findByName("USER");
+
+        Set<Role> roleSet = new HashSet<>();
+        if (employeeRole != null) {
+            roleSet.add(employeeRole);
+        }
+        if (customerRole != null) {
+            roleSet.add(customerRole);
+        }
+        user.setRoles(roleSet);
+
+        user.setUsername(userDto.getUsername());
+        user.setEmail(email);
+
+        userRepository.save(user);
+
+        User savedUser = userRepository.save(user);
+
+        return userMapper.toDto(savedUser);
+    }
+
+    @Override
+    public void giveAuthority(Long id) {
+
+    }
+
 
     @Override
     public UserDTO getUser(Long id) {

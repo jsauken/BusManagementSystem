@@ -11,11 +11,9 @@ import java.time.LocalDateTime;
 @Data
 public class TicketDTO {
     private Long id;
-    private UserDTO user;
+    private Long userId;
 
-    private FlightDTO flight;
+    private Long flightId;
     private int seatNumber;
-    private LocalDateTime bookingTime;
-    private Double price;
-    private String qrCode;
+
 }

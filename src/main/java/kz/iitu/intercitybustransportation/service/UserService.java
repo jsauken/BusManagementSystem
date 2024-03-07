@@ -21,7 +21,7 @@ public interface UserService {
     void signup(SignupDTO signupDTO);
 
     UserDTO createBusOperator(UserDTO userDto);
-    void giveAuthority(UserDTO userDto);
+    void giveAuthority(Long id);
 
 
 }

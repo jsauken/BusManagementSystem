@@ -19,24 +19,16 @@ public class TicketMapper {
     public TicketDTO toDto(Ticket ticket) {
         TicketDTO ticketDto = new TicketDTO();
         ticketDto.setId(ticket.getId());
-        ticketDto.setUser(userMapper.toDto(ticket.getUser()));
-        ticketDto.setFlight(flightMapper.toDto(ticket.getFlight()));
+        ticketDto.setFlightId(ticket.getFlight().getId());
+        ticketDto.setUserId(ticket.getUser().getId());
         ticketDto.setSeatNumber(ticket.getSeatNumber());
-        ticketDto.setBookingTime(ticket.getBookingTime());
-        ticketDto.setPrice(ticket.getPrice());
-        ticketDto.setQrCode(ticket.getQrCode());
         return ticketDto;
     }
 
     public Ticket toEntity(TicketDTO ticketDto) {
         Ticket ticket = new Ticket();
         ticket.setId(ticketDto.getId());
-        ticket.setUser(userMapper.toEntity(ticketDto.getUser()));
-        ticket.setFlight(flightMapper.toEntity(ticketDto.getFlight()));
         ticket.setSeatNumber(ticketDto.getSeatNumber());
-        ticket.setBookingTime(ticketDto.getBookingTime());
-        ticket.setPrice(ticketDto.getPrice());
-        ticket.setQrCode(ticketDto.getQrCode());
         return ticket;
     }
 }
