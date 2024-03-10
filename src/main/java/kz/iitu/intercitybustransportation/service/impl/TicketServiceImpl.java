@@ -12,6 +12,7 @@ import kz.iitu.intercitybustransportation.exceptions.SeatIsNotEmptyException;
 import kz.iitu.intercitybustransportation.mapper.TicketMapper;
 import kz.iitu.intercitybustransportation.model.Flight;
 import kz.iitu.intercitybustransportation.model.Ticket;
+import kz.iitu.intercitybustransportation.model.User;
 import kz.iitu.intercitybustransportation.model.enums.TicketStatus;
 import kz.iitu.intercitybustransportation.repository.FlightRepository;
 import kz.iitu.intercitybustransportation.repository.TicketRepository;
@@ -200,13 +201,32 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
-    public List<TicketDTO> showTicketsByUserId(Long userId) {
-        return null;
-    }
+    public List<TicketResponseDTO> showMyTickets() throws IOException {
+        ServletRequestAttributes sra = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        assert sra != null;
+        HttpServletRequest request = sra.getRequest();
+        HttpServletResponse response = sra.getResponse();
+        try {
+            String authHeader = request.getHeader("Authorization");
+            String token;
+            String email = null;
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+                email = JwtHelper.extractUsername(token);
+            }
 
-    @Override
-    public List<TicketDTO> showTicketsByTicketStatus(String status) {
-        return null;
+           User currentUser = userRepository.getByEmail(email);
+            return ticketRepository.findAllByUser(currentUser).stream()
+                    .map(ticketMapper::entToDto)
+                    .collect(Collectors.toList());
+
+        } catch (NoAccessException e) {
+            ApiErrorDTO errorResponse = new ApiErrorDTO(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().write(toJson(errorResponse));
+            return null;
+        }
+
     }
 
     private String toJson(ApiErrorDTO response) {

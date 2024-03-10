@@ -16,6 +16,5 @@ public interface TicketService {
     TicketDTO bookTicket(Long userId, TicketDTO ticketDto);
     TicketDTO bookTicketForFlight(Long flightId, Integer seat) throws IOException;
     TicketDTO cancelTicket(Long ticketId) throws IOException;
-    List<TicketDTO> showTicketsByUserId(Long userId);
-    List<TicketDTO> showTicketsByTicketStatus(String status);
+    List<TicketResponseDTO> showMyTickets() throws IOException;
 }

@@ -42,6 +42,8 @@ public class TicketController {
 
 
 
+
+
     @GetMapping("/cancel/{ticketId}")
     public ResponseEntity<String> cancelTicket(@PathVariable Long ticketId) throws IOException {
         TicketDTO canceledTicket = ticketService.cancelTicket(ticketId);
@@ -60,6 +62,11 @@ public class TicketController {
     @GetMapping
     public List<TicketResponseDTO> getAllTickets() {
         return ticketService.getAllTickets();
+    }
+
+    @GetMapping("my_tickets")
+    public List<TicketResponseDTO> myTickets() throws IOException {
+        return ticketService.showMyTickets();
     }
 
     @PostMapping
